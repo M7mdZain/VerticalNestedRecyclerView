@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     List<Month> createMonths() {
         List<Month> months = new ArrayList<>();
         months.add(new Month("January", 31));
-        months.add(new Month("February", 1000));
+        months.add(new Month("February", 28));
         months.add(new Month("March", 31));
         months.add(new Month("April", 30));
         months.add(new Month("May", 31));

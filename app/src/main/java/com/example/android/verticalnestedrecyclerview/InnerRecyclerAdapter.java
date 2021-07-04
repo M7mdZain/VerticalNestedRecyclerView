@@ -29,6 +29,7 @@ public class InnerRecyclerAdapter extends RecyclerView.Adapter<InnerRecyclerAdap
     // Tracking the currently loaded items in the RecyclerView
     private final ArrayList<Integer> currentLoadedPositions = new ArrayList<>();
 
+
     @NonNull
     @Override
     public InnerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {

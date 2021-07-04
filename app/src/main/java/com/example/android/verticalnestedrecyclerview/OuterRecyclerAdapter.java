@@ -61,16 +61,16 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
     public void isOuterScrollingDown(boolean scrollDown, int value) {
         if (scrollDown) {
             boolean isLastItemShown = currentLastItem == mMonths.get(currentPosition).dayCount;
-            if (!isLastItemShown) onScrollListener.onScroll(-value);
+            if (!isLastItemShown) onScrollListener.onScroll(value);
             enableOuterScroll(isLastItemShown);
 
         } else {
             boolean isFirstItemShown = currentFirstItem == 1;
-            if (!isFirstItemShown) onScrollListener.onScroll(-value);
+            if (!isFirstItemShown) onScrollListener.onScroll(value);
             enableOuterScroll(isFirstItemShown);
         }
         if (currentRV != null)
-            currentRV.smoothScrollBy(0, 10 * value);
+            currentRV.smoothScrollBy(0, 30 * value);
     }
 
     void enableOuterScroll(Boolean isEnabled) {

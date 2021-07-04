@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.example.android.verticalnestedrecyclerview.MainActivity.LOG_TAG;
 
@@ -21,11 +22,12 @@ import static com.example.android.verticalnestedrecyclerview.MainActivity.LOG_TA
 public class InnerRecyclerAdapter extends RecyclerView.Adapter<InnerRecyclerAdapter.InnerViewHolder> {
 
     private int days = 0;
-    private final ArrayList<Integer> currentLoadedPositions = new ArrayList<>();
-
     public void setDays(int days) {
         this.days = days;
     }
+
+    // Tracking the currently loaded items in the RecyclerView
+    private final ArrayList<Integer> currentLoadedPositions = new ArrayList<>();
 
     @NonNull
     @Override
@@ -55,5 +57,14 @@ public class InnerRecyclerAdapter extends RecyclerView.Adapter<InnerRecyclerAdap
             tvDay = listItem.findViewById(R.id.tv_day);
         }
     }
+
+
+    @Override
+    public void onViewRecycled(@NonNull InnerViewHolder holder) {
+        super.onViewRecycled(holder);
+        currentLoadedPositions.remove(Integer.valueOf(holder.getAdapterPosition()));
+        Log.d(LOG_TAG, "onViewRecycled: " + days + " " + currentLoadedPositions);
+    }
+
 
 }

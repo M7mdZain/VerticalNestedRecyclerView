@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 import static com.example.android.verticalnestedrecyclerview.MainActivity.LOG_TAG;
 

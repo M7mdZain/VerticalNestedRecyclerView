@@ -1,7 +1,9 @@
 package com.example.android.verticalnestedrecyclerview;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -12,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
+import static com.example.android.verticalnestedrecyclerview.MainActivity.LOG_TAG;
+
 /*
  * By: M7md.zain@gamil.com
  * 04.July.2021
@@ -20,7 +24,6 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
 
     private final List<Month> mMonths;
     private OnInnerEdgeItemShownListener onInnerEdgeItemShownListener;
-    private OnScrollListener onScrollListener;
     private int currentPosition = 0;
     private int currentFirstItem;
     private int currentLastItem;
@@ -28,10 +31,6 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
 
     OuterRecyclerAdapter(List<Month> months) {
         this.mMonths = months;
-    }
-
-    public void setOnScrollListener(OnScrollListener onScrollListener) {
-        this.onScrollListener = onScrollListener;
     }
 
     @NonNull
@@ -61,12 +60,14 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
     public void isOuterScrollingDown(boolean scrollDown, int value) {
         if (scrollDown) {
             boolean isLastItemShown = currentLastItem == mMonths.get(currentPosition).dayCount;
-            if (!isLastItemShown) onScrollListener.onScroll(value);
+            Log.d(LOG_TAG, "onTouch: isLastItemShown: " + isLastItemShown);
+//            if (!isLastItemShown) onScrollListener.onScroll(value);
             enableOuterScroll(isLastItemShown);
 
         } else {
             boolean isFirstItemShown = currentFirstItem == 1;
-            if (!isFirstItemShown) onScrollListener.onScroll(value);
+            Log.d(LOG_TAG, "onTouch: isFirstItemShown: " + isFirstItemShown);
+//            if (!isFirstItemShown) onScrollListener.onScroll(value);
             enableOuterScroll(isFirstItemShown);
         }
         if (currentRV != null)

@@ -1,6 +1,9 @@
 package com.example.android.verticalnestedrecyclerview;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,7 +20,9 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "LOG_TAG";
     private RecyclerView outerRecyclerView;
+    private float oldY = -1f;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,14 +34,12 @@ public class MainActivity extends AppCompatActivity {
         outerRecyclerView.setLayoutManager(new CustomLinearLayoutManager(this));
         outerRecyclerView.setHasFixedSize(true);
         outerRecyclerView.setAdapter(outerAdapter);
-
         outerAdapter.setOnInnerEdgeItemShownListener(this::enableScroll);
-        outerAdapter.setOnScrollListener(y -> outerRecyclerView.smoothScrollBy(0, y));
-
         outerRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                Log.d(LOG_TAG, "onTouch Scroll: " + dy);
                 if (dy > 0) //scrolled to BOTTOM
                     outerAdapter.isOuterScrollingDown(true, dy);
                 else if (dy < 0) //scrolled to TOP
@@ -44,9 +47,39 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        outerRecyclerView.setOnTouchListener((v, event) -> {
+            Log.d(LOG_TAG, "onTouch: ");
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_UP:
+                    oldY = -1;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    float newY = event.getRawY();
+                    Log.d(LOG_TAG, "onTouch: MOVE " + (oldY - newY));
+
+                    if (oldY == -1f) {
+                        oldY = newY;
+                        return true; // avoid further listeners (i.e. addOnScrollListener)
+
+                    } else if (oldY < newY) { // increases means scroll UP
+                        outerAdapter.isOuterScrollingDown(false, (int) (oldY - newY));
+                        oldY = newY;
+
+                    } else if (oldY > newY) { // decreases means scroll DOWN
+                        outerAdapter.isOuterScrollingDown(true, (int) (oldY - newY));
+                        oldY = newY;
+                    }
+                    break;
+            }
+            return false;
+        });
+
     }
 
     void enableScroll(Boolean isEnabled) {
+        Log.d(LOG_TAG, "onTouch: enableScroll " + isEnabled);
         ((CustomLinearLayoutManager) outerRecyclerView.getLayoutManager()).setScrollEnabled(isEnabled);
     }
 

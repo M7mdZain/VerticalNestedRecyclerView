@@ -12,7 +12,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.example.android.verticalnestedrecyclerview.MainActivity.LOG_TAG;
 
@@ -57,33 +59,37 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
         this.onInnerEdgeItemShownListener = onInnerEdgeItemShownListener;
     }
 
-    public void isOuterScrollingDown(boolean scrollDown, int value) {
-        if (scrollDown) {
+    public void isOuterScrollingDown(boolean scrollDown, int value, MotionEvent event) {
+        if (currentPosition >= 0 && scrollDown) {
             boolean isLastItemShown = currentLastItem == mMonths.get(currentPosition).dayCount;
             Log.d(LOG_TAG, "onTouch: isLastItemShown: " + isLastItemShown);
-//            if (!isLastItemShown) onScrollListener.onScroll(value);
-            enableOuterScroll(isLastItemShown);
+            enableOuterScroll(isLastItemShown, 0, true);
 
         } else {
             boolean isFirstItemShown = currentFirstItem == 1;
             Log.d(LOG_TAG, "onTouch: isFirstItemShown: " + isFirstItemShown);
-//            if (!isFirstItemShown) onScrollListener.onScroll(value);
-            enableOuterScroll(isFirstItemShown);
+            enableOuterScroll(isFirstItemShown, 0, false);
         }
-        if (currentRV != null)
+
+        if (currentRV != null && event != null)
             currentRV.smoothScrollBy(0, 30 * value);
     }
 
-    void enableOuterScroll(Boolean isEnabled) {
+    void enableOuterScroll(Boolean isEnabled, int dy, boolean isDown) {
         if (onInnerEdgeItemShownListener != null)
-            onInnerEdgeItemShownListener.enableScroll(isEnabled);
+            onInnerEdgeItemShownListener.enableScroll(isEnabled, dy, isDown);
     }
 
     class OuterViewHolder extends RecyclerView.ViewHolder {
 
+        public static final int SPEED_FACTOR = 20000;
         private final TextView tvMonth;
         private final RecyclerView innerRecyclerView;
         private final InnerRecyclerAdapter innerRecyclerAdapter;
+        private float dy;
+        private int actionDownFirstVisibleItem;
+        private long actionDownTimeStamp;
+        private ArrayList<Float> dyList = new ArrayList<>();
 
         @SuppressLint("ClickableViewAccessibility")
         OuterViewHolder(@NonNull View listItem) {
@@ -94,9 +100,35 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
             innerRecyclerView = listItem.findViewById(R.id.recycler_view_inner);
             innerRecyclerView.setLayoutManager(new LinearLayoutManager(listItem.getContext()));
             innerRecyclerAdapter = new InnerRecyclerAdapter();
+            KotlinSpaceKt.enforceSingleScrollDirection(innerRecyclerView);
             innerRecyclerView.setAdapter(innerRecyclerAdapter);
 
+            AtomicBoolean isAlreadyLast = new AtomicBoolean(false);
+            AtomicBoolean isAlreadyFirst = new AtomicBoolean(false);
+
             innerRecyclerView.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    int lastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
+                    if (lastItem == mMonths.get(currentPosition).dayCount) {
+                        isAlreadyLast.set(true);
+                    }
+                    int firstItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition() + 1;
+                    if (firstItem == 1) {
+                        isAlreadyFirst.set(true);
+                    }
+                    actionDownFirstVisibleItem = firstItem;
+                    actionDownTimeStamp = System.currentTimeMillis();
+
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    isAlreadyLast.set(false);
+                    isAlreadyFirst.set(false);
+                }
+                dyList.clear();
+
+                dy = event.getY();
+                dyList.add(dy);
+
+                Log.d(LOG_TAG, "OuterViewHolder:setOnTouchListener " + dy);
                 currentLastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
                 currentFirstItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition() + 1;
                 currentPosition = getAdapterPosition();
@@ -104,18 +136,36 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
                 return false;
             });
 
+
             innerRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
                 @Override
                 public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
 
+                    currentLastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
+                    currentFirstItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition() + 1;
+                    currentPosition = getAdapterPosition();
+                    Log.d(LOG_TAG, "onScrollStateChanged: first: " + currentFirstItem);
+                    Log.d(LOG_TAG, "onScrollStateChanged: last: " + currentLastItem);
+                    float speed = SPEED_FACTOR * ((float) actionDownFirstVisibleItem - currentFirstItem) / (actionDownTimeStamp - System.currentTimeMillis());
+                    Log.d(LOG_TAG, "onScrollStateChanged: speed: " + speed);
+
                     if (!recyclerView.canScrollVertically(1) // Is it not possible to scroll more to bottom (i.e. Last item shown)
                             && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        enableOuterScroll(true);
+                        if (currentLastItem == mMonths.get(currentPosition).dayCount && !dyList.isEmpty() && !isAlreadyLast.get()) {
+                            enableOuterScroll(true, (int) (speed ), false);
+                            isAlreadyLast.set(false);
+                        } else
+                            enableOuterScroll(true, 0, true);
 
                     } else if (!recyclerView.canScrollVertically(-1) // Is it possible to scroll more to top (i.e. First item shown)
                             && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        enableOuterScroll(true);
+                        if (currentFirstItem == 1 && !dyList.isEmpty() && !isAlreadyFirst.get()) {
+                            enableOuterScroll(true, (int) speed, false);
+                            isAlreadyFirst.set(false);
+                        } else
+                            enableOuterScroll(true, 0, false);
+
                     }
                 }
             });

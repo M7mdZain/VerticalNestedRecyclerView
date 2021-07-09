@@ -2,11 +2,14 @@ package com.example.android.verticalnestedrecyclerview;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String LOG_TAG = "LOG_TAG";
     private RecyclerView outerRecyclerView;
     private float oldY = -1f;
+    private OuterRecyclerAdapter outerAdapter;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -29,21 +33,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Setting up the outer RecyclerView
-        OuterRecyclerAdapter outerAdapter = new OuterRecyclerAdapter(createMonths());
+        outerAdapter = new OuterRecyclerAdapter(createMonths());
         outerRecyclerView = findViewById(R.id.recycler_view_outer);
         outerRecyclerView.setLayoutManager(new CustomLinearLayoutManager(this));
         outerRecyclerView.setHasFixedSize(true);
         outerRecyclerView.setAdapter(outerAdapter);
-        outerAdapter.setOnInnerEdgeItemShownListener(this::enableScroll);
+
+//        KotlinSpaceKt.enforceSingleScrollDirection(outerRecyclerView);
+
+        outerAdapter.setOnInnerEdgeItemShownListener((isEnabled, dy, isDown) -> enableScroll(isEnabled, dy, isDown));
         outerRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 Log.d(LOG_TAG, "onTouch Scroll: " + dy);
                 if (dy > 0) //scrolled to BOTTOM
-                    outerAdapter.isOuterScrollingDown(true, dy);
+                    outerAdapter.isOuterScrollingDown(true, dy, null);
                 else if (dy < 0) //scrolled to TOP
-                    outerAdapter.isOuterScrollingDown(false, dy);
+                    outerAdapter.isOuterScrollingDown(false, dy, null);
             }
         });
 
@@ -64,11 +71,11 @@ public class MainActivity extends AppCompatActivity {
                         return true; // avoid further listeners (i.e. addOnScrollListener)
 
                     } else if (oldY < newY) { // increases means scroll UP
-                        outerAdapter.isOuterScrollingDown(false, (int) (oldY - newY));
+                        outerAdapter.isOuterScrollingDown(false, (int) (oldY - newY), event);
                         oldY = newY;
 
                     } else if (oldY > newY) { // decreases means scroll DOWN
-                        outerAdapter.isOuterScrollingDown(true, (int) (oldY - newY));
+                        outerAdapter.isOuterScrollingDown(true, (int) (oldY - newY), event);
                         oldY = newY;
                     }
                     break;
@@ -78,9 +85,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void enableScroll(Boolean isEnabled) {
+    void enableScroll(Boolean isEnabled, int dy, boolean isDown) {
         Log.d(LOG_TAG, "onTouch: enableScroll " + isEnabled);
         ((CustomLinearLayoutManager) outerRecyclerView.getLayoutManager()).setScrollEnabled(isEnabled);
+        if (isEnabled && dy != 0)
+            outerRecyclerView.smoothScrollBy(0, dy); // isDown? dy:-dy
     }
 
     List<Month> createMonths() {

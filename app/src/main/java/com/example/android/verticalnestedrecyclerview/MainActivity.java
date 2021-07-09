@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        KotlinSpaceKt.enforceSingleScrollDirection(outerRecyclerView);
 
-        outerAdapter.setOnInnerEdgeItemShownListener((isEnabled, dy, isDown) -> enableScroll(isEnabled, dy, isDown));
+        outerAdapter.setOnInnerEdgeItemShownListener((isEnabled, dy) -> enableScroll(isEnabled, dy));
         outerRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
@@ -85,11 +85,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void enableScroll(Boolean isEnabled, int dy, boolean isDown) {
+    void enableScroll(Boolean isEnabled, int dy) {
         Log.d(LOG_TAG, "onTouch: enableScroll " + isEnabled);
         ((CustomLinearLayoutManager) outerRecyclerView.getLayoutManager()).setScrollEnabled(isEnabled);
         if (isEnabled && dy != 0)
-            outerRecyclerView.smoothScrollBy(0, dy); // isDown? dy:-dy
+            outerRecyclerView.smoothScrollBy(0, dy);
+
     }
 
     List<Month> createMonths() {

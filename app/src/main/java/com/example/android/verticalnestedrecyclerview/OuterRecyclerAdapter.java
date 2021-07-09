@@ -63,21 +63,21 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
         if (currentPosition >= 0 && scrollDown) {
             boolean isLastItemShown = currentLastItem == mMonths.get(currentPosition).dayCount;
             Log.d(LOG_TAG, "onTouch: isLastItemShown: " + isLastItemShown);
-            enableOuterScroll(isLastItemShown, 0, true);
+            enableOuterScroll(isLastItemShown, 0);
 
         } else {
             boolean isFirstItemShown = currentFirstItem == 1;
             Log.d(LOG_TAG, "onTouch: isFirstItemShown: " + isFirstItemShown);
-            enableOuterScroll(isFirstItemShown, 0, false);
+            enableOuterScroll(isFirstItemShown, 0);
         }
 
         if (currentRV != null && event != null)
             currentRV.smoothScrollBy(0, 30 * value);
     }
 
-    void enableOuterScroll(Boolean isEnabled, int dy, boolean isDown) {
+    void enableOuterScroll(Boolean isEnabled, int dy) {
         if (onInnerEdgeItemShownListener != null)
-            onInnerEdgeItemShownListener.enableScroll(isEnabled, dy, isDown);
+            onInnerEdgeItemShownListener.enableScroll(isEnabled, dy);
     }
 
     class OuterViewHolder extends RecyclerView.ViewHolder {
@@ -153,18 +153,18 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
                     if (!recyclerView.canScrollVertically(1) // Is it not possible to scroll more to bottom (i.e. Last item shown)
                             && newState == RecyclerView.SCROLL_STATE_IDLE) {
                         if (currentLastItem == mMonths.get(currentPosition).dayCount && !dyList.isEmpty() && !isAlreadyLast.get()) {
-                            enableOuterScroll(true, (int) (speed ), false);
+                            enableOuterScroll(true, (int) (speed));
                             isAlreadyLast.set(false);
                         } else
-                            enableOuterScroll(true, 0, true);
+                            enableOuterScroll(true, 0);
 
                     } else if (!recyclerView.canScrollVertically(-1) // Is it possible to scroll more to top (i.e. First item shown)
                             && newState == RecyclerView.SCROLL_STATE_IDLE) {
                         if (currentFirstItem == 1 && !dyList.isEmpty() && !isAlreadyFirst.get()) {
-                            enableOuterScroll(true, (int) speed, false);
+                            enableOuterScroll(true, (int) speed);
                             isAlreadyFirst.set(false);
                         } else
-                            enableOuterScroll(true, 0, false);
+                            enableOuterScroll(true, 0);
 
                     }
                 }

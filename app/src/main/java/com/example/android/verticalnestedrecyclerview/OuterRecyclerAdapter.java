@@ -82,11 +82,10 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
 
     class OuterViewHolder extends RecyclerView.ViewHolder {
 
-        public static final int SPEED_FACTOR = 20000;
+        public static final int SPEED_FACTOR = 10000;
         private final TextView tvMonth;
         private final RecyclerView innerRecyclerView;
         private final InnerRecyclerAdapter innerRecyclerAdapter;
-        private float dy;
         private int actionDownFirstVisibleItem;
         private long actionDownTimeStamp;
         private ArrayList<Float> dyList = new ArrayList<>();
@@ -108,6 +107,11 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
 
             innerRecyclerView.setOnTouchListener((v, event) -> {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    currentLastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
+                    currentFirstItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition() + 1;
+                    currentPosition = getAdapterPosition();
+                    currentRV = innerRecyclerView;
+
                     int lastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
                     if (lastItem == mMonths.get(currentPosition).dayCount) {
                         isAlreadyLast.set(true);
@@ -122,17 +126,10 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
                     isAlreadyLast.set(false);
                     isAlreadyFirst.set(false);
+                    currentRV = null;
+                    dyList.clear();
                 }
-                dyList.clear();
-
-                dy = event.getY();
-                dyList.add(dy);
-
-                Log.d(LOG_TAG, "OuterViewHolder:setOnTouchListener " + dy);
-                currentLastItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition() + 1;
-                currentFirstItem = ((LinearLayoutManager) innerRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition() + 1;
-                currentPosition = getAdapterPosition();
-                currentRV = innerRecyclerView;
+                dyList.add(event.getY());
                 return false;
             });
 
@@ -165,7 +162,6 @@ public class OuterRecyclerAdapter extends RecyclerView.Adapter<OuterRecyclerAdap
                             isAlreadyFirst.set(false);
                         } else
                             enableOuterScroll(true, 0);
-
                     }
                 }
             });

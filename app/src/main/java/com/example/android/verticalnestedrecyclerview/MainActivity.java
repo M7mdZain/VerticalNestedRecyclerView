@@ -35,7 +35,9 @@ public class MainActivity extends AppCompatActivity {
         // Setting up the outer RecyclerView
         outerAdapter = new OuterRecyclerAdapter(createMonths());
         outerRecyclerView = findViewById(R.id.recycler_view_outer);
-        outerRecyclerView.setLayoutManager(new CustomLinearLayoutManager(this));
+        CustomLinearLayoutManager manager = new CustomLinearLayoutManager(this);
+        manager.setSmoothScrollbarEnabled(true);
+        outerRecyclerView.setLayoutManager(manager);
         outerRecyclerView.setHasFixedSize(true);
         outerRecyclerView.setAdapter(outerAdapter);
 
